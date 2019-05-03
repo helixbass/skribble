@@ -21,6 +21,24 @@ I don't fit" (as opposed to "if I hit a `hardline` before I've run out of space,
 
 At that point the manual `breakParent` *should* be unnecessary?
 
+Ok trying to get conditional groups to check if their last line fits -
+was seeing things like:
+```
+f(a => {
+  b;
+},
+c);
+```
+Looking at the doc associated with the conditional group option for this "should group first" case, I was confused as to why
+it wasn't always doing this, since the group containing the first arg and comma is marked `break: true` (since the hardline of the block propagated out to this wrapping group) and it's just a `line` after the comma
+
+Turns out it's not actually ever rendering the `shouldGroupFirst` version of that conditional group option!
+Why? because it thinks the flat (first conditional group option) version fits!
+So by changing the algorithm to check that the last line fits, it was (correctly?) deciding that the flat version
+doesn't fit and was actually rendering the `shouldGroupFirst` version, which is broken - in order to achieve that
+behavior with the space after the comma, I guess you'd need a different version of that group-with-the-comma that
+knows that it's inline so doesn't use a `line`?
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
