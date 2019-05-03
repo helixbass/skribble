@@ -8,6 +8,21 @@ outer(setTimeout(function() {
 ```
 Fix: propagate breaks through "flat" version of conditional groups
 
+Ok the reason it doesn't is that there's an explicit `somePrintedArgumentsWillBreak ? breakParent : ""` (for some fascinating related early Prettier history, see [#559](https://github.com/prettier/prettier/pull/559) [#496](https://github.com/prettier/prettier/pull/496))
+
+The problem with this is that `willBreak()` is *static* - it only works here because there are `hardline`s when formatting a block (here, the function body). If those were eg `line`s that did in fact end up breaking, you'd get the formatting above since it wouldn't know statically that it should propagate the break to the parent
+
+So how should it propagate a soft break like that to the parent (across the `conditionalGroup()` "boundary")?
+
+The only way is through measuring/`fits()`, since the parent figures out whether it breaks before its child does
+
+So here `outer()` should say "if I encounter a conditional group whose flat version doesn't *all* fit on one line,
+I don't fit" (as opposed to "if I hit a `hardline` before I've run out of space, I fit")
+
+At that point the manual `breakParent` *should* be unnecessary?
+
+-----------------------------------------
+
 Want to be able to check if *last* line of conditional group fits or not
 eg we may not want this:
 ```
