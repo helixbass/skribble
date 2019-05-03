@@ -52,3 +52,21 @@ Implementation:
 a new mode seems like the best fit conceptually - `MODE_FLAT_REMEASURE`?
 
 otherwise I guess you'd have to add another field to `cmds` to track it?
+
+The way that this happens:
+```
+map(row => [
+  eee
+]);
+```
+is that when it's checking if the conditional group option for "break last arg" for the arguments fits,
+the `shouldBreak: true` from the `group()` in the conditional group option "propagates" to the `[...]` group
+because of this line (in `fits()`):
+```
+cmds.push([ind, doc.break ? MODE_BREAK : mode, doc.contents]);
+```
+ie when `fits()` is checking a `group()` which is `MODE_BREAK` (which only happens inside a conditional group),
+it keeps measuring all further nested groups in `MODE_BREAK`!
+So what you're really measuring is if the first line fits when breaking every single group you encounter.
+And you have no control over whether it should break every single group like this, that's effectively hardcoded
+into the algorithm
