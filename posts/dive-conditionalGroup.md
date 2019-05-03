@@ -39,6 +39,11 @@ doesn't fit and was actually rendering the `shouldGroupFirst` version, which is 
 behavior with the space after the comma, I guess you'd need a different version of that group-with-the-comma that
 knows that it's inline so doesn't use a `line`?
 
+As far as the check-last-line algorithm, I *think* it'll actually want to ignore overflows on anything except the last line?
+(Does this imply that the check-last-line behavior should be opt-in for conditional groups?)
+Seems like the current keep-breaking-nested-groups behavior would usually result in things not overflowing (inside of the
+explicitly `shouldBreak: true` groups in the conditional group option)?
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
