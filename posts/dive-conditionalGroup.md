@@ -115,7 +115,16 @@ conditional group option is not saying "I didn't fit" even though it has a child
 not sure if there's a good way to handle this (in the algorithm ie be able to remove the manual `breakParent`) -
 the general idea I guess is to preserve this situation where conditional
 groups are fully in control of whether they break or not (?) ie they don't not fit just because they have a child that
-linebreaks
+linebreaks. Does this call into question the value of the algorithm change though?
+
+Ok so what's specifically happening (I think) is that it's not the outer conditional group that should be breaking (it
+wouldn't be in the current algorithm, since breaks aren't propagated to conditional groups), it's an intermediate 
+(non-conditional) group
+(corresponding to the body of the outer arrow function) that now isn't having an explicit `break: true` propagated to it
+by the manual `breakParent`. And the outer conditional group is saying "I fit" (like it already does), and then the
+intermediate group isn't remeasuring. So I think this would be fixed by the below "come up with a way to make sure that
+"top-level" groups inside conditional group options remeasure" and then the manual `breakParent` could be removed? Yup
+confirmed that it's a `shouldRemeasure` issue by temporarily removing the `shouldRemeasure` logic entirely
 
 -----------------------------------------
 
