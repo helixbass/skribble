@@ -102,6 +102,21 @@ necessary for conditional groups, in this instance there were no conditional gro
 happened to be triggering a remeasure of a fill content group that was incorrectly pushed as `MODE_FLAT` (ie considered to
 fit as part of its parent)
 
+Now trying to remove manual `breakParent` (and corresponding `shouldBreak: printedArguments.some(willBreak)`) from
+`printArgumentsList()` conditional group, there are tests failing eg:
+```
+new Promise((resolve, reject) => fn((err, result) => {
+    x
+  })
+```
+So the reason they're failing is because we're dealing with nested conditional groups there - conditional group options are
+the one exception to "doesn't fit if we see a newline before we've checked the whole command", so in this case the outer
+conditional group option is not saying "I didn't fit" even though it has a child conditional group that doesn't "fit". I'm
+not sure if there's a good way to handle this (in the algorithm ie be able to remove the manual `breakParent`) -
+the general idea I guess is to preserve this situation where conditional
+groups are fully in control of whether they break or not (?) ie they don't not fit just because they have a child that
+linebreaks
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
