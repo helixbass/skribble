@@ -151,6 +151,42 @@ instead of
 ```
 This looks like an outer group breaking because an inner one does?
 
+Yup it's now printing the expanded/breaking form of the outer group (`[`...`]`). I don't know whether this new formatting is
+acceptable or not - if not, probably would want to preserve this via a special case for when there's only a single child
+between the `[`/`]` (which would omit `indent()`/`softline` etc)? The idea being that it surely doesn't want to "inline" the
+`[`/`]` if there are multiple children - I wonder if there's test coverage/how it handles this type of multiline case when
+there are multiple children - eg is this valid YAML?:
+```
+[
+? foo
+ bar : baz, qux: quux
+]
+```
+Yup without the algorithm change it formats like:
+```
+[? foo
+    bar
+  : baz, qux: quux]
+```
+which feels very un-Prettier. Here's with the algorithm change:
+```
+[
+  ? foo
+    bar
+  : baz,
+  qux: quux,
+]
+```
+
+Even if this is acceptable, there's still the risk that plugins (or untested parts of languages included in Prettier repo)
+are not following this "outer group should break if inner one does" rule so that this algorithm change could be a breaking
+change. But seems like it's the right thing to do (ie don't expose it as opt-in or something to preserve compatibility with
+existing algorithm that doesn't get the outer group to break for you)? Maybe could try running known plugins' tests against
+the branch with the algorithm change?
+
+Also I'm curious with this YAML conditional group why it needs to be a conditional group? There's only one option, what's the
+meaning of a conditional group with only one option?
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
