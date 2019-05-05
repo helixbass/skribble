@@ -44,6 +44,48 @@ As far as the check-last-line algorithm, I *think* it'll actually want to ignore
 Seems like the current keep-breaking-nested-groups behavior would usually result in things not overflowing (inside of the
 explicitly `shouldBreak: true` groups in the conditional group option)?
 
+Ok implemented where all `fits()` checks (except when checking a conditional group option) check that the *whole* command
+that was being checked (for fitting) has been fitted at the time a newline is encountered - if it hasn't all been fitted
+(ie there's a linebreak *inside* the thing we were checking whether it all fits on a line), then it says "I didn't fit"
+
+This will only be relevant for stuff with conditional groups nested inside of them, since otherwise any hard lines would
+have propagated up and we wouldn't be checking for fitting (since we'd already know that it breaks)
+
+And so this should result in outer groups which contain nested conditional groups always breaking when the conditional
+group "breaks" (ie anything besides the first conditional group option in flat mode is used, or the first option in flat mode
+contains a hard line?) (getting rid of the need to eg do
+the manual `breakParent` discussed above - doing it this way should also cover the case when there's not a *hard* line in the
+conditional group? Although actually shouldn't that case be covered when checking `fits()`? I think not necessarily - imagine
+if the first conditional group option used a manually broken (`shouldBreak: true`) group - then the current `fits()` check
+would say "it fits" because eg a `line` in the `shouldBreak: true` group would end the line, but the manual `breakParent`
+wouldn't kick in because there's no `willBreak()` - actually wait `willBreak()` checks for `shouldBreak: true` groups (not
+just hard lines)! So I guess that implies that the manual `breakParent` is equivalent to this `fits()` algorithm as far as
+making sure that any outer group (enclosing a nested conditional group) will break if the conditional group "breaks". But
+we'd want to have the algorithm do that for us rather than needing to manually `breakParent`, right? See discussion in #559,
+they agree that this is desired behavior consistent with the way things work in general)
+
+The original motivating thing behind this dive was questioning whether `firstBreakingIndex` was the right abstraction.
+The above seems to rectify whether conditional groups appear to break(/need to break) to their *parents*, but I assume I
+introduced `firstBreakingIndex` related to visible groups, ie whether it appears to have broken to *children*. I'm guessing
+that any issues I was having with that would be a `shouldRemeasure` issue? So would be addressed by the idea below of
+something like forcing remeasuring on all "top-level" group descendants of a conditional group option
+
+One big case I saw failing then was YAML objects eg this:
+```
+Block style: !!map
+  Clark: Evans
+```
+was formatting like:
+```
+Block style:
+  !!map
+  Clark: Evans
+```
+Haven't fully wrapped my head around the relevant YAML AST and formatting rules, but what's happening is that the outer
+thing (`group()`?) that contains a nested conditional group is deciding that it fits (since I guess it's just measuring
+until it hits a hard line in the flat version of the conditional group), and then the conditional group itself is
+deciding that it doesn't need to remeasure so it's just blindly using its flat version!
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
