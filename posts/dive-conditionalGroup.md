@@ -81,10 +81,13 @@ Block style:
   !!map
   Clark: Evans
 ```
-Haven't fully wrapped my head around the relevant YAML AST and formatting rules, but what's happening is that the outer
-thing (`group()`?) that contains a nested conditional group is deciding that it fits (since I guess it's just measuring
+Haven't fully wrapped my head around the relevant YAML AST and formatting rules, but I think what's happening is that the
+outer thing (`group()`?) that contains a nested conditional group is deciding that it fits (since I guess it's just measuring
 until it hits a hard line in the flat version of the conditional group), and then the conditional group itself is
 deciding that it doesn't need to remeasure so it's just blindly using its flat version!
+
+Ok fixed the YAML formatting by passing `isConditionalGroupOption: true` also for the first ("flat") conditional group option
+(I should have been doing that)
 
 -----------------------------------------
 
