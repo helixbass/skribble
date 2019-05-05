@@ -126,6 +126,31 @@ intermediate group isn't remeasuring. So I think this would be fixed by the belo
 "top-level" groups inside conditional group options remeasure" and then the manual `breakParent` could be removed? Yup
 confirmed that it's a `shouldRemeasure` issue by temporarily removing the `shouldRemeasure` logic entirely
 
+Ok tried replacing `shouldRemeasure` with `MODE_FLAT_REMEASURE` (and removing the manual `breakParent`) and it works!
+
+The only failing tests are a couple of YAML ones that failed from the algorithm change that I haven't looked at yet eg:
+```
+[
+? foo
+ bar : baz
+]
+```
+is formatting like:
+```
+[
+  ? foo
+    bar
+  : baz,
+]
+```
+instead of
+```
+[? foo
+    bar
+  : baz]
+```
+This looks like an outer group breaking because an inner one does?
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
