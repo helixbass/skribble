@@ -89,6 +89,19 @@ deciding that it doesn't need to remeasure so it's just blindly using its flat v
 Ok fixed the YAML formatting by passing `isConditionalGroupOption: true` also for the first ("flat") conditional group option
 (I should have been doing that)
 
+At that point there was a JSX test failing:
+```
+br_triggers_expression_break =
+  <div><br />
+  text text text text text text text text text text text {this.props.type} </div>
+```
+Turned out that there was a bug in the way `fill()` checks if it fits that
+got exposed because with this algorithm it was correctly deciding that something with a hard line breaks, which was
+resulting in `shouldRemeasure` not being reset by that hard line (remember `shouldRemeasure` is only supposed to be
+necessary for conditional groups, in this instance there were no conditional groups involved, `shouldRemeasure` just
+happened to be triggering a remeasure of a fill content group that was incorrectly pushed as `MODE_FLAT` (ie considered to
+fit as part of its parent)
+
 -----------------------------------------
 
 Want to be able to check if *last* line of conditional group fits or not
