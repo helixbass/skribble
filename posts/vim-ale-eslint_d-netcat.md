@@ -1,5 +1,7 @@
 The goal is to use a `netcat`-based way of calling `eslint_d` (per the `eslint_d` README) when linting from vim via ALE to make it run even faster
 
+![](../images/eslint-speed-comparison.png)
+
 In `~/.vim/ftplugin/javascript.vim`:
 ```
 " let g:ale_javascript_eslint_executable = 'eslint_d'
