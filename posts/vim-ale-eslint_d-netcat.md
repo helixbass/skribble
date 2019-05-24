@@ -1,3 +1,5 @@
+The goal is to use a `netcat`-based way of calling `eslint_d` (per the `eslint_d` README) when linting from vim via ALE to make it run even faster
+
 In `~/.vim/ftplugin/javascript.vim`:
 ```
 " let g:ale_javascript_eslint_executable = 'eslint_d'
@@ -54,3 +56,5 @@ function! ale#fixers#eslint#ApplyFixForVersion(buffer, version_output) abort
     " if l:executable =~# 'eslint_d$' && ale#semver#GTE(l:version, [3, 19, 0])
     if l:executable =~# 'netcat_eslint_d$'
 ```
+
+Measuring vim performance: https://stackoverflow.com/questions/12213597/how-to-see-which-plugins-are-making-vim-slow/12216578#12216578
