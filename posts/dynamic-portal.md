@@ -40,7 +40,7 @@ parent)
 
 I had never seen a "dynamic portal" that changed its target parent DOM node "mid-flight", but that seemed like
 the most obvious way to structure it - mount the video inside some visually hidden parent container initially (via a portal)
-and then when the modal opened, *poof* change the portal destination to the modal!
+and then when the modal opened, *\*poof\** change the portal destination to the modal!
 
 ### tl;dr it worked
 
@@ -53,7 +53,7 @@ So let's look at the specific code patterns used to create this "dynamic portal"
 Portals expect to be given an actual DOM node (for the destination). So in React, when you hear "actual DOM node" you should
 be thinking "ref"
 
-Here, we need two refs since we need two DOM nodes for the portal - a visually hidden container and then the modal
+Here, we need two refs since we need two DOM nodes for the portal destination - a visually hidden container and then the modal
 
 Initially I tried using ["new-style refs"](https://reactjs.org/docs/refs-and-the-dom.html#creating-refs), since these days I'd
 default to using that style of ref. But I wasn't seeing the portal rerendering reliably once the refs were populated
@@ -64,6 +64,8 @@ instead
 
 So here's how I wired up the two callback-style refs:
 ```
+import {flow} from 'lodash/fp'
+
 const VideoAnswer = flow(
   ...
   addCallbackRefAndNode(
@@ -185,6 +187,8 @@ making sure the video is fully unmounted after the modal has been closed
 
 First, set up a `hasModalBeenClosed` state variable:
 ```
+import {..., addStateHandlers} from 'ad-hok'
+
 const addVideoUnmountingOnModalClose = flow(
   addStateHandlers(
     {hasModalBeenClosed: false},
@@ -226,7 +230,7 @@ const addEffectOnPropChange = (changeProps, callback) => props => {
   return props
 }
 ```
-where `usePrevious()` is a custom hook straight from the [`React docs`](https://reactjs.org/docs/hooks-faq.html#how-to-get-the-previous-props-or-state)
+where `usePrevious()` is a custom hook straight from the [React docs](https://reactjs.org/docs/hooks-faq.html#how-to-get-the-previous-props-or-state)
 
 And then we'll consider the value of `hasModalBeenClosed` when deciding what the portal destination should be
 
