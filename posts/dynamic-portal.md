@@ -208,29 +208,7 @@ const addVideoUnmountingOnModalClose = flow(
   )
 )
 ```
-This uses the handy `addEffectOnPropChange()` helper, which is a somewhat more declarative version (which uses hooks under the
-hood) of the type of "prop-diffing" you'd typically have done in eg `componentDidUpdate()`:
-```
-import {useEffect} from 'react'
-import {find} from 'lodash'
-
-import usePrevious from 'util/usePrevious'
-import {ensureArray} from 'util/fp'
-
-const addEffectOnPropChange = (changeProps, callback) => props => {
-  const prevProps = usePrevious(props) || {}
-  useEffect(() => {
-    const changed = find(
-      ensureArray(changeProps),
-      changeProp => prevProps[changeProp] !== props[changeProp]
-    )
-    if (!changed) return null
-    return callback(props, prevProps)
-  })
-  return props
-}
-```
-where `usePrevious()` is a custom hook straight from the [React docs](https://reactjs.org/docs/hooks-faq.html#how-to-get-the-previous-props-or-state)
+This uses the handy [`addEffectOnPropChange()` helper](./addEffectOnPropChange)
 
 And then we'll consider the value of `hasModalBeenClosed` when deciding what the portal destination should be
 
