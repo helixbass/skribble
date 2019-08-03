@@ -1,4 +1,4 @@
-# A gentle introduction to using `ad-hok` for React hooks
+# A gentle introduction to `ad-hok`
 
 You may have already heard about [React hooks](https://reactjs.org/docs/hooks-intro.html) or started using them
 in your React components. Fundamentally, hooks enable you to write (function components)[https://reactjs.org/docs/components-and-props.html#function-and-class-components]
@@ -12,9 +12,11 @@ you how to think about building up React components out of the small "building b
 
 ### How `flow()` works
 
-The common [`Lodash`](https://lodash.com/) utility library actually includes useful helpers for expressing things in a more
+The common [`lodash`](https://lodash.com/) utility library includes useful helpers for expressing things in a more
 functional style which you can import from [`lodash/fp`](https://github.com/lodash/lodash/wiki/FP-Guide).
 Let's look at how to convert an example using regular Lodash helpers to use `lodash/fp` instead.
+
+##### Example: Dog breeds
 
 Say we fetch JSON data from an API that describes different dog breeds. We want to print a comma-separated list of all of
 the breeds that don't shed e.g. `"Bichon Frise, Dachsund, ..."`. Here's one way we might write this using Lodash:
@@ -27,13 +29,14 @@ const commaSeparated = join(dontShed, ', ')
 console.log(commaSeparated)
 ```
 That works. But notice how it's very "imperative" - at each step, we have to define a new local variable to keep track of
-the computation so far. Here it may not be too bad to keep track of what's going on, but especially as logic gets more complex
+the computation so far. Here it may not be too bad to understand what's going on, but especially as logic gets more complex
 there are big [readability advantages](https://www.yegor256.com/2015/09/01/redundant-variables-are-evil.html) to minimizing the
-number of local variables being used
+number of local variables being used.
 
-Basically, it's really hard to keep track in your head of "which variable gets used where" as you're trying to read code and
-understand what's going on. So we're going to help ourselves out by using a style where it's more obvious what the dependencies
+Basically, it's really hard to keep track in your head of "which variable gets used where" as you're trying to read code. So we're going to help ourselves out by using a style where it's more obvious what the dependencies
 and flow of data are as you go through the code.
+
+##### Start refactoring
 
 So let's roll up our refactoring sleeves. First, let's extract the part that gets the comma-separated list from the JSON data
 into a separate helper function:
@@ -58,13 +61,69 @@ import {filter, join} from 'lodash'
 
 const getCommaSeparatedDontShed = jsonData =>
   join(filter(jsonData, dogBreed => !dogBreed.sheds), ', ')
-
-const dogBreedsData = fetchDogBreedsData()
-const commaSeparatedDontShed = getCommaSeparatedDontShed(dogBreedsData)
-console.log(commaSeparated)
 ```
 Here, we "inlined" the `filter()` step and then implicitly returned the result of `join()` by using an ES6 arrow function
 [expression body](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions#Function_body)
 (we got rid of the curly braces).
 
-In general, that's a good sign
+In general, that's a good sign - in functional programming, describing computations using expressions === :heart:. But here,
+that wasn't necessarily an improvement. We'd like to be able to read the code left-to-right and top-to-bottom, but here we sort of have to read
+"inside out" to understand what's going on - first, the nested `filter()`, then the outer `join()`.
+
+So let's go back to the previous version. And I'm going to introduce the "alternative" versions of `filter()` and `join()` from `lodash/fp`:
+```js
+import {filter, join} from 'lodash/fp'
+
+const getCommaSeparatedDontShed = jsonData => {
+  const dontShed = filter(dogBreed => !dogBreed.sheds)(jsonData)
+  const commaSeparated = join(', ')(dontShed)
+  return commaSeparated
+}
+```
+Ok, let's break down what changed by looking at the `filter()` call:
+```js
+// lodash version
+import {filter} from 'lodash'
+filter(jsonData, dogBreed => !dogBreed.sheds)
+
+// lodash/fp version
+import {filter} from 'lodash/fp'
+filter(dogBreed => !dogBreed.sheds)(jsonData)
+```
+You can see that the `lodash/fp` version sort of takes the same arguments as the `lodash` version but (a) in reverse order -
+the "callback argument" `dogBreed => !dogBreed.sheds` comes first (b) across two separate function calls. This is the gist of what the [`lodash/fp` Guide](https://github.com/lodash/lodash/wiki/FP-Guide) means by "immutable auto-curried iteratee-first data-last methods".
+
+So what's so great about that? We just changed the order of the arguments and took more function calls to get the same result.
+Well, notice how now there's a pattern in `getCommaSeparatedDontShed()` where the result of each previous step is the only
+argument to the outer function call of the next step:
+1. `jsonData` (the input to `getCommaSeparatedDontShed()`) is the outer argument to `filter()`
+1. `dontShed` is the outer argument to `join()`
+1. We return the final value `commaSeparated`
+
+What you want to start to picture is a "pipeline" where we feed in our input value (`jsonData`), and then each step of the pipeline transforms the value that it receives into a new value that it hands off to the next step in the pipeline. And then
+finally the last step in our pipeline "hands off" its transformed value as the return value (`commaSeparated`) of the whole pipeline function (`getCommaSeparatedDontShed()`).
+
+What `lodash/fp` gives us is a helper for managing that pipeline for us: `flow()`. Take a look:
+```
+import {filter, join, flow} from 'lodash/fp'
+
+const getCommaSeparatedDontShed = flow(
+  filter(dogBreed => !dogBreed.sheds),
+  join(', ')
+)
+```
+All `flow()` is doing is connecting the steps of the pipeline for you. If it's not clear to you what's going on here, let's start
+with a simpler example that illustrates the way it's composing functions:
+```js
+const addOneThenDouble = flow(
+  x => x + 1,
+  y => y * 2
+)
+
+// 1. `x` gets the value 3, so the first function returns 4
+// 2. `y` gets the value 4, so the second function return 8
+// 3. The return value of the whole flow() is the return value of the last step, so 8
+addOneThenDouble(3) // 8
+```
+First of all, we can see that calling `flow()` returns a function (which we're calling `addOneThenDouble`). And the arguments to
+`flow()` are also functions - each step in the pipeline is a function that accepts an input argument and returns a value.
