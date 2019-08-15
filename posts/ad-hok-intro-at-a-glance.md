@@ -33,6 +33,7 @@ With `ad-hok`, rather than putting our hooks code at the beginning of a function
 the component as a `flow()`:
 ```js
 import React from 'react'
+import {flow} from 'lodash/fp'
 import {addState} from 'ad-hok'
 
 const Example = flow(
@@ -49,7 +50,7 @@ const Example = flow(
 )
 ```
 #### Following the flow of props
-The thing that's "flowing down the pipeline" is a `props` object
+The thing that's "flowing down the pipeline" is a props object
 
 At the beginning of the chain, it's just the props that got passed to your component
 
@@ -93,12 +94,13 @@ function Example() {
   );
 }
 ```
-This example introduces the [`useEffect`](https://reactjs.org/docs/hooks-effect.html) hook. Notice that the effect
+This example introduces the [`useEffect()`](https://reactjs.org/docs/hooks-effect.html) hook. Notice that the effect
 *depends on* the `count` state variable
 
 Here's the `ad-hok` version:
 ```js
 import React from 'react'
+import {flow} from 'lodash/fp'
 import {addState, addEffect} from 'ad-hok'
 
 const Example = flow(
@@ -153,6 +155,8 @@ function FriendStatus(props) {
 And the `ad-hok` version:
 ```js
 import React from 'react'
+import {flow} from 'lodash/fp'
+import {addState, addHandlers, addEffect} from 'ad-hok'
 
 const FriendStatus = flow(
   addState('isOnline', 'setIsOnline', null),
@@ -178,7 +182,7 @@ const FriendStatus = flow(
 ```
 What's new here?
 
-1. we use `addHandlers()` to include the `handleStatusChange()` helper in the props object. Notice how `handleStatusChange()`
+1. we use `addHandlers()` to add a `handleStatusChange()` helper to the props object. Notice how `handleStatusChange()`
 is also able to access its dependency `setIsOnline`
 
 2. The `FriendStatus` component is expecting to be passed a `friend` prop. Notice how the effect handler is able to access
@@ -189,4 +193,50 @@ and `handleStatusChange` came from inside the pipeline
 `handleStatusChange`, and `setIsOnline`. This helps us see that when it comes to actually rendering this component, it's
 only a function of the current `isOnline` status, nothing else
 
+### Example #4: multiple effects
+```js
+function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
 
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  function handleStatusChange(status) {
+    setIsOnline(status.isOnline);
+  }
+  // ...
+```
+Composing multiple effects and state is similar in `ad-hok`:
+```js
+const FriendStatusWithCounter = flow(
+  addState('count', 'setCount', 0),
+  addEffect(({count}) => () => {
+    document.title = `You clicked ${count} times`;
+  }),
+  addState('isOnline', 'setIsOnline', null),
+  addHandlers({
+    handleStatusChange: ({setIsOnline}) => status => {
+      setIsOnline(status.isOnline)
+    }
+  }),
+  addEffect(({friend, handleStatusChange}) => () => {
+    ChatAPI.subscribeToFriendStatus(friend.id, handleStatusChange)
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(friend.id, handleStatusChange)
+    }
+  }),
+  // ...
+```
+
+### Keep learning!
+
+You can do a lot with `addState()`, `addEffect()` and `addHandlers()`. But just as there are [more React hooks](https://reactjs.org/docs/hooks-reference.html), `ad-hok` has lots of other useful helpers. Explore the
+[`ad-hok` documentation](https://github.com/helixbass/ad-hok), and [file an issue](https://github.com/helixbass/ad-hok/issues) if you have any questions or need any help :sparkles:
