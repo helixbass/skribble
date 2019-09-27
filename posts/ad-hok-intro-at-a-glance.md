@@ -186,7 +186,7 @@ and `handleStatusChange` came from inside the pipeline
 `handleStatusChange`, and `setIsOnline`. This helps us see that when it comes to actually rendering this component, it's
 only a function of the current `isOnline` status, nothing else
 
-### Example #4: multiple effects
+### Example #4: Multiple effects
 ```js
 function FriendStatusWithCounter(props) {
   const [count, setCount] = useState(0);
@@ -212,7 +212,7 @@ Composing multiple effects and state is similar in `ad-hok`:
 const FriendStatusWithCounter = flow(
   addState('count', 'setCount', 0),
   addEffect(({count}) => () => {
-    document.title = `You clicked ${count} times`;
+    document.title = `You clicked ${count} times`
   }),
   addState('isOnline', 'setIsOnline', null),
   addHandlers({
