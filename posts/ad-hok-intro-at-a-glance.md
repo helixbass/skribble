@@ -1,16 +1,15 @@
 # From vanilla React hooks to `ad-hok`: At a glance
 
 [`ad-hok`](https://github.com/helixbass/ad-hok) is a library that lets you use React hooks in a
-[functional pipeline](https://martinfowler.com/articles/collection-pipeline/) style
-
-If you're unfamiliar with functional pipelines or the `flow()` helper from `lodash/fp`, take a look at
-[this introduction](https://simonsmith.io/dipping-a-toe-into-functional-js-with-lodash-fp) first
+[functional pipeline](https://martinfowler.com/articles/collection-pipeline/) style. If you're
+unfamiliar with functional pipelines or the `flow()` helper from `lodash/fp`, take a look at
+[this introduction](https://simonsmith.io/dipping-a-toe-into-functional-js-with-lodash-fp) first.
 
 We'll go through examples from the React [Hooks at a Glance](https://reactjs.org/docs/hooks-overview.html) documentation
-and look at how they could be written using `ad-hok` helpers instead of "vanilla hooks"
+and look at how they could be written using `ad-hok` helpers instead of "vanilla hooks".
 
 ### Example 1: State Hook
-The [first example](https://reactjs.org/docs/hooks-overview.html#state-hook) just uses the
+The [first example](https://reactjs.org/docs/hooks-overview.html#state-hook) from the React docs just uses the
 [`useState()`](https://reactjs.org/docs/hooks-state.html) hook:
 ```js
 import React, { useState } from 'react';
@@ -50,26 +49,20 @@ const Example = flow(
 )
 ```
 #### Following the flow of props
-The thing that's "flowing down the pipeline" is a props object
-
-At the beginning of the chain, it's just the props that got passed to your component
-
-So for example, if we render `Example` like this:
+The thing that's "flowing down the pipeline" is a props object. At the beginning of the chain, it's just the props that got passed to your component. So for example, if we render `Example` like this:
 ```js
 <Example message="woops" />
 ```
-then `{message: 'woops'}` is the value fed into the `flow()` pipeline
+then `{message: 'woops'}` is the value fed into the `flow()` pipeline.
 
 If we render `Example` with no props:
 ```js
 <Example />
 ```
-then an empty object `{}` is fed into the pipeline
+then an empty object `{}` is fed into the pipeline.
 
-`ad-hok` helpers like `addState()` add additional props to the props object
-
-Here, `addState()` adds both the state value `count` and the state setter `setCount` to the props object. Then the last
-step in the pipeline uses those props when rendering
+`ad-hok` helpers like `addState()` add additional props to the props object. Here, `addState()` adds both the state value `count` and the state setter `setCount` to the props object. Then the last
+step in the pipeline uses those props when rendering.
 
 ### Example #2: [Effect Hook](https://reactjs.org/docs/hooks-overview.html#effect-hook)
 ```js
@@ -95,7 +88,7 @@ function Example() {
 }
 ```
 This example introduces the [`useEffect()`](https://reactjs.org/docs/hooks-effect.html) hook. Notice that the effect
-*depends on* the `count` state variable
+*depends on* the `count` state variable.
 
 Here's the `ad-hok` version:
 ```js
@@ -120,12 +113,12 @@ const Example = flow(
 )
 ```
 Instead of referencing `count` via a closure, we now access `count` via the props object that gets supplied to the
-`addEffect()` callback
+`addEffect()` callback.
 
 #### So what?
-It may not be obvious yet why this style is nicer than the "vanilla hooks" version. But notice how each step of the
-pipeline can be explicit about which props it depends on. Once you get used to the functional style, this ends up
-feeling much "cleaner" and makes it way easier to keep track of things when building components with complex logic and state
+It may not be obvious yet why this style might be preferable to the "vanilla hooks" version. Notice how each step of the
+pipeline can be explicit about which props it depends on. Once you get used to the functional style, this can provide a
+huge benefit in terms of keeping track of things when building components with complex logic and state.
 
 ### Example #3: Effect with cleanup
 ```js
