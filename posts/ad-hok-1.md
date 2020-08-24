@@ -69,6 +69,37 @@ That isn't tragic, but there's mental overhead (as the programmer or the reader)
 states simultaneously through a single code path ("How would this behave when we're in "loading" state? How would it
 behave when we're in "loaded" state?")
 
+Or, our other option is to force a component boundary to avoid violating the rules of hooks:
+```js
+const TodaysMatches = () => {
+  const {data, loading} = useMatchesQuery()
+
+  if (loading) {
+    return <LoadingSpinner />
+  }
+
+  return <TodaysMatchesInner data={data} />
+}
+
+const TodaysMatchesInner = ({data}) => {
+  const {t} = useTranslation()
+  
+  const todayMatches = useMemo(() =>
+    sortBy('startTime', (data ? data.matches : []).filter(match => isToday(match))
+  , [data])
+
+  return (
+    <div>
+      <h1>{t('todaysMatches')}</h1>
+      <ul>
+        {todayMatches.map(todayMatch => <Match match={todayMatch} key={todayMatch.id} />)}
+      </ul>
+    </div>
+  )
+}
+```
+
+
 This should feel artificial to you, dear reader. We're being forced to structure our code to appease the *technology*,
 which React itself helped us realize is a [bad idea](https://www.youtube.com/watch?v=x7cQ3mrcKaY). A total smell.
 
@@ -106,7 +137,7 @@ const addTranslationHelpers = addProps(() => {
 })
 ```
 Not only did we get to "bail out early" like we wanted to, we're also now in a position to easily abstract out
-that common pattern:
+this common pattern:
 ```js
 const TodaysMatches = flowMax(
   addMatchesQuery(),
