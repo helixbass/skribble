@@ -18,7 +18,7 @@ const TodaysMatches = () => {
   
   const todayMatches = useMemo(() =>
     sortBy('startTime', data.matches.filter(match => isToday(match))
-  )
+  , [data])
   
   return (
     <div>
@@ -30,3 +30,49 @@ const TodaysMatches = () => {
   )
 }
 ```
+
+Why? Because we're not allowed to call any hooks after the "early return" of `<LoadingSpinner />`
+
+So then we're left in the uncomfortable situation of having to restructure our code to something *less* intuitive
+while making sure it still behaves the way we want it to
+
+One option is to "push down" the bail-out to after all of the hooks have been called:
+
+```js
+const TodaysMatches = () => {
+  const {data, loading} = useMatchesQuery()
+  
+  const {t} = useTranslation()
+  
+  const todayMatches = useMemo(() =>
+    sortBy('startTime', (data ? data.matches : []).filter(match => isToday(match))
+  , [data])
+
+  if (loading) {
+    return <LoadingSpinner />
+  }
+
+  return (
+    <div>
+      <h1>{t('todaysMatches')}</h1>
+      <ul>
+        {todayMatches.map(todayMatch => <Match match={todayMatch} key={todayMatch.id} />)}
+      </ul>
+    </div>
+  )
+}
+```
+We had to guard against `data.matches` not being present, since we're no longer sure that we're on the "happy path"
+when calculating today's matches
+
+That isn't tragic, but there's mental overhead (as the programmer or the reader) when you have to track multiple
+states simultaneously through a single code path ("How would this behave when we're in "loading" state? How would it
+behave when we're in "loaded" state?")
+
+This should feel artificial to you, dear reader. We're being forced to structure our code to appease the *technology*,
+which React itself helped us realize is a [bad idea](https://www.youtube.com/watch?v=x7cQ3mrcKaY), a total smell
+
+
+But both of these are inconvenient for the programmer and the reader - our mental model is that the "loading" path only
+depends on the `loading` state, but we're not being allowed to directly express that and "move on" to the core "happy path"
+logic.
