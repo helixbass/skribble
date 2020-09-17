@@ -1,0 +1,5 @@
+ad-hok vs vanilla hooks:
+- addStateHandlers() vs useReducer()
+- fine-grained performance tuning with addMemoBoundary(), addComponentBoundary(), addNamedComponentBoundary()
+- declarative remounting via addRemountingWhenPropsChange()
+- consuming render props and HOC's "in stride" with addWrapper() and addWrapperHOC()
